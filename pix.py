@@ -27,35 +27,39 @@ DELAY_POLLING = 0.2
 class Pix:
     
     def __init__(self):
-        self.button_color = digitalio.DigitalInOut(microcontroller.pin.GPIO1)
-        self.button_color.direction = digitalio.Direction.OUTPUT
-        self.button_bright = digitalio.DigitalInOut(microcontroller.pin.GPIO2)
-        self.button_bright.direction = digitalio.Direction.OUTPUT
+        # for some reason board.pin.GPIOx wasn't found at runtime - autocomplete worked when importing and board.py is in lib directory
+        self.button_color = _init_button(microcontroller.pin.GPIO1)
+        self.button_bright = _init_button(microcontroller.pin.GPIO2)
         self.current_color_index = 0
         self.current_brightness = 0.1
-        self.pixels = self.init_pixels()
+        self.pixels = neopixel.NeoPixel(microcontroller.pin.GPIO0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.RGB)
         self.running = True
         self.start()
-
-    def init_pixels(self):
-        return neopixel.NeoPixel(microcontroller.pin.GPIO0, PIXEL_AMOUNT, auto_write=False)
+        
+    def _init_button(self, pin : microcontroller.pin -> digitalio.DigitalInOut):
+        button = digitalio.DigitalInOut(pin)
+        button.direction = digitalio.Direction.OUTPUT
+        return button
 
     def next_color(self):
         self.current_color_index = self.current_color_index + 1 if len(COLORS)-1 > self.current_color_index else 0
-        self.set_color(COLORS[self.current_color_index])
+        self.set_color_brightness()
             
     def set_color(self, color : (int, int, int)):
         print(f"changing colors to {color}")
         self.pixels.fill(color)
-        self.pixels.show()
 
     def next_brightness(self):
         self.current_brightness = self.current_brightness + BRIGHTNESS_INCREASE_STEP if self.current_brightness + BRIGHTNESS_INCREASE_STEP <= BRIGHTNESS_MAX else BRIGHTNESS_MIN
-        self.set_brightness(self.current_brightness)
+        self.set_color_brightness()
         
     def set_brightness(self, brightness : float):
         print(f"changing brightness to {round(brightness, 1)}")
         self.pixels.brightness = brightness
+
+    def set_color_brightness(self):
+        self.set_brightness(self.current_brightness)
+        self.set_color(COLORS[self.current_color_index])
         self.pixels.show()
 
     def off(self):
@@ -66,12 +70,11 @@ class Pix:
     def on(self):
         print(f"turning the light on again")
         self.set_brightness(self.current_brightness)
-        self.set_color(COLORS[self.current_color_index])
         self.running = True
         
     def init(self):
-        self.pixels.brightness = self.current_brightness
-        self.pixels.fill(COLORS[self.current_color_index])
+        self.set_brightness(self.current_brightness)
+        self.set_color(COLORS[self.current_color_index])
         self.pixels.show()
 
     def start(self):
@@ -81,20 +84,20 @@ class Pix:
             while True:
                 while self.running:
                     # Turning off the light when both buttons are pressed simultaneously -> jumps into outer loop
-                    if self.button_color.value and self.button_bright.value:
+                    while self.button_color.value and self.button_bright.value and self.running:
                         self.off()
                         time.sleep(DELAY_ON_OFF)
                     # sets next defined color on all leds
-                    if self.button_color.value and not self.button_bright.value:
+                    while self.button_color.value and not self.button_bright.value:
                         self.next_color()
                         time.sleep(DELAY_SWITCH)
                     # increases brightness by step and if surpassing maximum begins at minimum
-                    if self.button_bright.value and not self.button_color.value:
+                    while self.button_bright.value and not self.button_color.value:
                         self.next_brightness()
                         time.sleep(DELAY_SWITCH)
                     time.sleep(DELAY_POLLING)
                 # Waiting for button press in deactivated state - will turn on light with either button
-                if self.button_bright.value or self.button_color.value:
+                while (self.button_bright.value or self.button_color.value) and not self.running :
                     self.on()
                     time.sleep(DELAY_ON_OFF)
                 time.sleep(DELAY_POLLING)
