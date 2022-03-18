@@ -79,11 +79,9 @@ class Pix:
                         time.sleep(1)
                     if self.button_color.value and not self.button_bright.value:
                         self.next_color()
-                        self.pixels.show()
                         time.sleep(0.2)
                     if self.button_bright.value and not self.button_color.value:
                         self.next_brightness()
-                        self.pixels.show()
                         time.sleep(0.2)
                     time.sleep(0.1)
                 if self.button_bright.value or self.button_color.value:
