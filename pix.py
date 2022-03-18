@@ -1,3 +1,4 @@
+import board
 import neopixel
 import time
 import microcontroller
@@ -21,22 +22,23 @@ BRIGHTNESS_INCREASE_STEP = 0.1
 PIXEL_AMOUNT = 8
 
 DELAY_ON_OFF = 1.0
-DELAY_SWITCH = 0.3
+DELAY_SWITCH = 0.5
 DELAY_POLLING = 0.2
 
 class Pix:
     
     def __init__(self):
         # for some reason board.pin.GPIOx wasn't found at runtime - autocomplete worked when importing and board.py is in lib directory
-        self.button_color = _init_button(microcontroller.pin.GPIO1)
-        self.button_bright = _init_button(microcontroller.pin.GPIO2)
+        self.button_color = self._init_button(microcontroller.pin.GPIO1)
+        self.button_bright = self._init_button(microcontroller.pin.GPIO2)
         self.current_color_index = 0
         self.current_brightness = 0.1
-        self.pixels = neopixel.NeoPixel(microcontroller.pin.GPIO0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.RGB)
+        self.pixels = neopixel.NeoPixel(microcontroller.pin.GPIO0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.GRB)
+#         self.pixels = neopixel.NeoPixel(board.D0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.RGBW)
         self.running = True
         self.start()
         
-    def _init_button(self, pin : microcontroller.pin -> digitalio.DigitalInOut):
+    def _init_button(self, pin : microcontroller.pin) -> digitalio.DigitalInOut:
         button = digitalio.DigitalInOut(pin)
         button.direction = digitalio.Direction.OUTPUT
         return button
@@ -65,11 +67,13 @@ class Pix:
     def off(self):
         print("turning off the light")
         self.set_brightness(BRIGHTNESS_MIN)
+        self.pixels.show()
         self.running = False
         
     def on(self):
         print(f"turning the light on again")
         self.set_brightness(self.current_brightness)
+        self.pixels.show()
         self.running = True
         
     def init(self):
