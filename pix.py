@@ -1,22 +1,18 @@
-import board
+# import board
 import neopixel
 import time
 import microcontroller
 import digitalio
 
-RED = (255,0,0)
-RED2 = (127,127,0)
-GREEN = (0,255,0)
-GREEN2 = (0,127,127)
-BLUE = (0,0,255)
-BLUE2 = (127,0,127)
-WHITE = (85,85,85)
-WHITE2 = (127,127,127)
-WHITE3 = (255,255,255)
-COLORS = (RED, RED2, GREEN, GREEN2, BLUE, BLUE2, WHITE, WHITE2, WHITE3)
+
+COLORS = ((255,0,0),(223,32,0),(191,64,0),(159,96,0),(127,127,0),(95,159,0),(64,191,0),(32,223,0), # red to green
+          (0,255,0),(0,223,32),(0,191,64),(0,159,96),(0,127,127),(0,96,159),(0,64,191), # green to blue
+          (0,0,255),(32,32,191),(64,64,127),(85,85,85), # blue to white
+          (127,64,64),(191,32,32)) # white to red
 
 BRIGHTNESS_MAX = 1.0
-BRIGHTNESS_MIN = 0.0
+BRIGHTNESS_MIN = 0.1
+BRIGHTNESS_OFF = 0.0
 BRIGHTNESS_INCREASE_STEP = 0.1
 
 PIXEL_AMOUNT = 8
@@ -28,13 +24,13 @@ DELAY_POLLING = 0.2
 class Pix:
     
     def __init__(self):
-        # for some reason board.pin.GPIOx wasn't found at runtime - autocomplete worked when importing and board.py is in lib directory
+        # for some reason board.GPIOx wasn't found at runtime - autocomplete worked when importing and board.py is in lib directory
         self.button_color = self._init_button(microcontroller.pin.GPIO1)
         self.button_bright = self._init_button(microcontroller.pin.GPIO2)
         self.current_color_index = 0
         self.current_brightness = 0.1
         self.pixels = neopixel.NeoPixel(microcontroller.pin.GPIO0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.GRB)
-#         self.pixels = neopixel.NeoPixel(board.D0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.RGBW)
+        # self.pixels = neopixel.NeoPixel(board.D0, PIXEL_AMOUNT, auto_write=False, pixel_order=neopixel.RGBW)
         self.running = True
         self.start()
         
@@ -49,7 +45,10 @@ class Pix:
             
     def set_color(self, color : (int, int, int)):
         print(f"changing colors to {color}")
-        self.pixels.fill(color)
+#         self.pixels.fill(color)
+        for i in range(PIXEL_AMOUNT):
+            self.pixels[i]=color
+            time.sleep(0.015)
 
     def next_brightness(self):
         self.current_brightness = self.current_brightness + BRIGHTNESS_INCREASE_STEP if self.current_brightness + BRIGHTNESS_INCREASE_STEP <= BRIGHTNESS_MAX else BRIGHTNESS_MIN
@@ -66,7 +65,7 @@ class Pix:
 
     def off(self):
         print("turning off the light")
-        self.set_brightness(BRIGHTNESS_MIN)
+        self.set_brightness(BRIGHTNESS_OFF)
         self.pixels.show()
         self.running = False
         
