@@ -82,7 +82,6 @@ class Pix:
         self.pixels.show()
 
     def start(self):
-        print("Start")
         self.init()
         try:
             while True:
