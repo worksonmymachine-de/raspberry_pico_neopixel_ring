@@ -87,7 +87,7 @@ class Pix:
         try:
             while True:
                 while self.running:
-                    # Turning off the light when both buttons are pressed simultaneously -> jumps into outer loop
+                    # Turning off the light when both buttons are pressed simultaneously
                     while self.button_color.value and self.button_bright.value and self.running:
                         self.off()
                         time.sleep(DELAY_ON_OFF)
